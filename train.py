@@ -83,13 +83,13 @@ def main(config):
             model.cuda(config.gpu_id)
             crit.cuda(config.gpu_id)
 
-        cnn_trainer= Trainer(config)
-        cnn_model = cnn_trainer.train(
+        rnn_trainer= Trainer(config)
+        rnn_model = rnn_trainer.train(
             model,
             crit,
             optimizer,
-            loader.train_loader,
-            loader.valid_loader,
+            loaders.train_loader,
+            loaders.valid_loader,
         )
 
 
@@ -101,3 +101,31 @@ def main(config):
             n_classes = n_classes,
             use_batch_norm= config.use_batch_norm
         )
+        optimizer =optim.Adam(model.parameters())
+        crit = nn.NLLLoss()
+        print(model)
+
+        if config.gpu_id >=0:
+            model.cuda(config.gpu_id)
+            crit.cuda(config.gpu_id)
+
+        cnn_trainer = Trainer(config)
+        cnn_model = cnn_trainer.train(
+            model,
+            crit,
+            loaders.train_loader,
+            loaders.valid_loader,
+        )
+
+    torch.save({
+        'rnn' : rnn_model.state_dict() if config.rnn else None,
+        'cnn' : cnn_model.state_dict() if config.cnn else None,
+        'config' : config,
+        'vocab' : loaders.text.vocab,
+        'classes' : loaders.label.vocab,
+    }, config.model_fn)
+
+
+if __name__ =='__main__':
+    config = define_argparser()
+    main(config)
